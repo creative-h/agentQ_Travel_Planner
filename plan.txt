@@ -1,0 +1,10 @@
+Task:
+Create one Travel package booking portal
+Where everything is automated
+No human intervention is required
+Coustomer will define the search criteria for the whole package
+  One country or mulitple country
+  One destination or mulitple destination
+  Portal will define best package deal through mulitple airlines and hotel offers
+
+One Destination might have better offer from bookings dot com and other destination might have better offer from hotels dot com.

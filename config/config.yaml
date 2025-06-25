@@ -1,0 +1,48 @@
+# TripyTrek Configuration
+
+# Model Parameters
+model:
+  summarizer:
+    model_name: "facebook/bart-large-cnn"
+    max_length: 150
+    min_length: 40
+    batch_size: 4
+  
+  review_classifier:
+    model_name: "distilbert-base-uncased"
+    batch_size: 16
+    learning_rate: 2e-5
+    categories:
+      - location
+      - facilities
+      - food
+      - value
+      - service
+  
+  recommendation_engine:
+    similarity_threshold: 0.7
+    max_recommendations: 5
+    budget_weight: 0.3
+    interest_weight: 0.6
+    popularity_weight: 0.1
+
+# Application Settings
+app:
+  cache_timeout: 3600  # in seconds
+  debug: true
+  log_level: "INFO"
+
+# Data Settings
+data:
+  cache_dir: "../data/cache"
+  sample_size: 100
+  review_min_length: 50
+  
+# UI Settings
+ui:
+  theme: "default"
+  max_width: "800px"
+  title: "TripyTrek - AI Travel Discovery"
+  description: "Explore destinations, read AI-generated reviews, and get personalized recommendations"
+  primary_color: "#4B6BFB"
+  secondary_color: "#7B92FF"

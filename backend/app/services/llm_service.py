@@ -1,7 +1,7 @@
 import json
 from typing import Dict, List, Any, Optional
 import structlog
-from openai import OpenAI
+import aiohttp
 from pydantic import ValidationError
 
 from app.config.settings import settings
@@ -17,10 +17,38 @@ class LLMService:
     def __init__(self):
         if not settings.GROQ_API_KEY:
             logger.warning("GROQ_API_KEY not set, LLM service will not function properly")
-        # OpenAI client can work with Groq API by changing the base URL
-        self.client = OpenAI(api_key=settings.GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+        # Using direct HTTP requests with Groq's API
+        self.api_url = "https://api.groq.com/openai/v1/chat/completions"
+        self.headers = {
+            "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
         self.model = settings.LLM_MODEL
         
+    async def _make_llm_request(self, messages: List[Dict[str, str]], temperature: float = 0.7) -> str:
+        """Make a request to the LLM service"""
+        try:
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": 4000,
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.api_url, headers=self.headers, json=payload) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        logger.error("Error from LLM API", status=response.status, error=error_text)
+                        raise Exception(f"Error from LLM API: {response.status} - {error_text}")
+                    
+                    result = await response.json()
+                    return result["choices"][0]["message"]["content"]
+                    
+        except Exception as e:
+            logger.error("Error making LLM request", error=str(e))
+            raise Exception(f"Error communicating with LLM service: {e}")
+
     async def extract_intent_from_text(self, text: str) -> Dict[str, Any]:
         """
         Extract structured travel intent from free-text input
@@ -35,28 +63,25 @@ class LLMService:
             - budget_level (budget, moderate, luxury)
             - transport_type (air, road)
             - interests (list of strings)
-
+            
             Text: {text}
-
+            
             Return ONLY valid JSON without any explanations or additional text.
             """
             
-            response = self.client.chat.completions.create(
-                model=self.model,
+            content = await self._make_llm_request(
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
-                max_tokens=1000,
+                temperature=0.2
             )
             
-            content = response.choices[0].message.content
             parsed_content = json.loads(content)
             logger.info("Successfully extracted intent from text", input=text)
             return parsed_content
             
-        except (json.JSONDecodeError, ValidationError) as e:
+        except Exception as e:
             logger.error("Failed to extract intent from text", error=str(e), input=text)
-            return {"error": "Failed to extract intent from text"}
-    
+            raise Exception(f"Failed to extract intent from text: {str(e)}")
+
     async def generate_itinerary(self, trip_data: TripResponse) -> Itinerary:
         """
         Generate a detailed day-by-day itinerary based on trip data
@@ -131,14 +156,8 @@ class LLMService:
             Return ONLY valid JSON without any explanations or additional text.
             """
             
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                max_tokens=4000,
-            )
-            
-            content = response.choices[0].message.content
+            response = await self._make_llm_request([{"role": "user", "content": prompt}], temperature=0.7)
+            content = response
             
             # Extract JSON from the response
             try:
@@ -161,7 +180,7 @@ class LLMService:
         except Exception as e:
             logger.error("Failed to generate itinerary", error=str(e), trip_id=trip_data.id)
             raise ValueError(f"Failed to generate itinerary: {str(e)}")
-    
+
     async def refine_itinerary(self, 
                               itinerary: Itinerary, 
                               refinement: ItineraryRefinementRequest) -> Itinerary:
@@ -170,33 +189,22 @@ class LLMService:
         """
         try:
             # Prepare the current itinerary as context
-            itinerary_json = itinerary.model_dump_json()
+            current_itinerary_json = itinerary.model_dump_json()
             
             specific_day = ""
             if refinement.specific_day is not None:
                 specific_day = f"for day {refinement.specific_day}"
             
             prompt = f"""
-            I have an existing travel itinerary and I need to refine it {specific_day} based on the following request:
+            I have an existing travel itinerary that needs to be refined {specific_day} based on user feedback.
             
-            "{refinement.natural_language_request}"
+            Current itinerary: {current_itinerary_json}
             
-            Current itinerary:
-            {itinerary_json}
-            
-            Please modify the itinerary according to the request and return the complete updated itinerary as JSON.
-            Keep the same structure but update the relevant parts only.
-            Return ONLY valid JSON without any explanations or additional text.
+            User's request for refinement: "{refinement.natural_language_request}"
             """
             
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                max_tokens=4000,
-            )
-            
-            content = response.choices[0].message.content
+            response = await self._make_llm_request([{"role": "user", "content": prompt}], temperature=0.7)
+            content = response
             
             try:
                 parsed_content = json.loads(content)

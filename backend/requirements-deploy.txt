@@ -1,0 +1,20 @@
+# Core dependencies without any Rust dependencies
+fastapi==0.110.0
+uvicorn==0.27.1
+pydantic==2.5.3
+python-dotenv==1.0.1
+httpx==0.26.0
+structlog==24.1.0
+
+# Use MySQL connector instead of PostgreSQL to avoid compilation issues
+pymysql==1.1.0
+sqlalchemy==2.0.27
+
+# API utilities
+python-multipart==0.0.6
+
+# Direct HTTP client without Rust
+requests==2.31.0
+
+# OpenAI client
+aiohttp==3.9.1

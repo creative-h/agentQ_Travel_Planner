@@ -17,8 +17,9 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install Python dependencies
-pip install -r requirements.txt
+# Install Python dependencies with minimal deployment requirements
+# Using requirements-deploy.txt to avoid any packages that require Rust compilation
+pip install -r requirements-deploy.txt
 
 # Create required directories if needed
 mkdir -p logs

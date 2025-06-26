@@ -1,15 +1,26 @@
+# Core FastAPI and server dependencies
 fastapi==0.110.0
 uvicorn==0.27.1
 pydantic==2.5.3
 python-dotenv==1.0.1
 httpx==0.26.0
+
+# Logging
 structlog==24.1.0
+
+# Database
+sqlalchemy==2.0.27
+# Using psycopg2 instead of psycopg2-binary to avoid compilation issues
+psycopg2==2.9.9
+alembic==1.13.1
+
+# API utilities
+python-multipart==0.0.6
+
+# LLM API client
+openai==1.6.1
+
+# Test dependencies
 pytest==7.4.3
 pytest-asyncio==0.23.5
 responses==0.24.1
-sqlalchemy==2.0.27
-psycopg2-binary==2.9.9
-alembic==1.13.1
-python-multipart==0.0.6
-# Using openai package for LLM API calls (compatible with Groq API)
-openai==1.6.1

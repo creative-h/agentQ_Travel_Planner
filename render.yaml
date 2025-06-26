@@ -3,9 +3,13 @@ services:
   - type: web
     name: triprtrek-api
     env: python
+    runtime: python3
     rootDir: backend
-    buildCommand: ./build.sh
-    startCommand: source .venv/bin/activate && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: >-
+      pip install --upgrade pip &&
+      pip install fastapi uvicorn pydantic python-dotenv aiohttp requests &&
+      mkdir -p logs
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: GROQ_API_KEY
         sync: false

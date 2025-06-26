@@ -17,7 +17,7 @@ const ItineraryTimeline = ({ day }) => {
       <div className="space-y-8">
         {allEvents.map((event, index) => {
           const isActivity = day.activities.includes(event);
-          const eventType = isActivity ? 'activity' : 'meal';
+          // eventType variable removed to fix build warning
 
           return (
             <div key={index} className="relative">

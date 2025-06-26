@@ -1,7 +1,7 @@
 import json
 from typing import Dict, List, Any, Optional
 import structlog
-from groq import Groq
+from openai import OpenAI
 from pydantic import ValidationError
 
 from app.config.settings import settings
@@ -17,7 +17,8 @@ class LLMService:
     def __init__(self):
         if not settings.GROQ_API_KEY:
             logger.warning("GROQ_API_KEY not set, LLM service will not function properly")
-        self.client = Groq(api_key=settings.GROQ_API_KEY)
+        # OpenAI client can work with Groq API by changing the base URL
+        self.client = OpenAI(api_key=settings.GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
         self.model = settings.LLM_MODEL
         
     async def extract_intent_from_text(self, text: str) -> Dict[str, Any]:

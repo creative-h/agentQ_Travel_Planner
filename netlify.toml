@@ -1,0 +1,28 @@
+[build]
+  base = "frontend"
+  publish = "build"
+  command = "CI=false npm run build"
+
+# Production context: all deploys from the Production branch set in your site's 
+# deploy contexts will inherit these settings.
+[context.production.environment]
+  REACT_APP_API_URL = "https://triprtrek-api.onrender.com/v1"
+  CI = "false"
+  NODE_ENV = "production"
+
+# Deploy Preview context: all deploys generated from a pull/merge request will inherit these settings.
+[context.deploy-preview.environment]
+  REACT_APP_API_URL = "https://triprtrek-api.onrender.com/v1"
+  CI = "false"
+
+# Branch deploy context: all deploys that are not from a pull/merge request or from the Production branch 
+# will inherit these settings.
+[context.branch-deploy.environment]
+  REACT_APP_API_URL = "https://triprtrek-api.onrender.com/v1"
+  CI = "false"
+
+# For 404s, serve the index.html (for SPA routing)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

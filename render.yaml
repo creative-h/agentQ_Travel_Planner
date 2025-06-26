@@ -1,0 +1,16 @@
+services:
+  # Backend API
+  - type: web
+    name: triprtrek-api
+    env: python
+    buildCommand: pip install -r backend/requirements-render.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CORS_ORIGINS
+        value: https://triprtrek.netlify.app,http://localhost:3000

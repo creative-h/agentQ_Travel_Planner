@@ -2,32 +2,51 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TripInitForm from '../components/trip/TripInitForm';
 import TripPreferencesForm from '../components/trip/TripPreferencesForm';
+import apiService from '../services/apiService';
 
 const NewTripPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [tripData, setTripData] = useState(null);
 
-  const handleTripInitSubmit = (data) => {
-    setTripData(data);
-    setCurrentStep(2);
-    window.scrollTo(0, 0);
+  const handleTripInitSubmit = async (data) => {
+    // If using natural language input, create the trip immediately
+    if (data.use_natural_language) {
+      try {
+        console.log('Creating trip with natural language input:', data.natural_language_input);
+        
+        // Make actual API call to create trip
+        const response = await apiService.createTrip(data);
+        const tripId = response.data.id;
+        
+        // Navigate directly to the itinerary page
+        navigate(`/trips/${tripId}/itinerary`);
+      } catch (error) {
+        console.error('Error creating trip:', error);
+        alert('Failed to create trip. Please try again.');
+      }
+    } else {
+      // Otherwise, proceed to preferences step
+      setTripData(data);
+      setCurrentStep(2);
+      window.scrollTo(0, 0);
+    }
   };
 
   const handlePreferencesSubmit = async (preferences) => {
     try {
-      // In a real application, we would make API calls here
       console.log('Creating trip with:', { ...tripData, preferences });
       
-      // Simulate API call
-      const tripResponse = {
-        id: 123, // This would come from the API
+      // Make actual API call to create trip with preferences
+      const tripData_with_preferences = {
         ...tripData,
-        preferences,
+        preferences
       };
+      const response = await apiService.createTrip(tripData_with_preferences);
+      const tripId = response.data.id;
 
       // Navigate to the itinerary page
-      navigate(`/trips/${tripResponse.id}/itinerary`);
+      navigate(`/trips/${tripId}/itinerary`);
     } catch (error) {
       console.error('Error creating trip:', error);
       alert('Failed to create trip. Please try again.');

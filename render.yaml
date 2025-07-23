@@ -18,4 +18,4 @@ services:
       - key: LOG_LEVEL
         value: INFO
       - key: CORS_ORIGINS
-        value: https://triprtrek.netlify.app,http://localhost:3000
+        value: '["https://endearing-chebakia-b65c72.netlify.app", "http://localhost:3000"]'

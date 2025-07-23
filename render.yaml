@@ -7,7 +7,7 @@ services:
     rootDir: backend
     buildCommand: >-
       pip install --upgrade pip &&
-      pip install fastapi uvicorn pydantic python-dotenv aiohttp requests structlog &&
+      pip install fastapi uvicorn pydantic pydantic-settings python-dotenv aiohttp requests structlog &&
       mkdir -p logs
     startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:

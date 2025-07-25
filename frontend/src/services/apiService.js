@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/v1',
+  baseURL: 'https://agentq-travel-planner-5.onrender.com/v1',
   headers: {
     'Content-Type': 'application/json',
   },

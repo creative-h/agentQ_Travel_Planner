@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import ItineraryTimeline from '../components/trip/ItineraryTimeline';
 import ItineraryMap from '../components/trip/ItineraryMap';
 import ChatRefinement from '../components/trip/ChatRefinement';
+import apiService from '../services/apiService';
 
 const ItineraryPage = () => {
   const { tripId } = useParams();
@@ -12,13 +13,34 @@ const ItineraryPage = () => {
   const [activeDay, setActiveDay] = useState(1);
 
   useEffect(() => {
-    // In a real app, we would fetch this data from the API
+    // Fetch real data from the API
     const fetchItinerary = async () => {
       try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLoading(true);
         
-        // Mock data
+        // Get trip details from the API
+        const tripResponse = await apiService.getTrip(tripId);
+        const tripData = tripResponse.data;
+        setTripDetails(tripData);
+        
+        // Try to get itinerary if it exists
+        try {
+          const itineraryResponse = await apiService.getItinerary(tripId);
+          setItinerary(itineraryResponse.data);
+        } catch (err) {
+          // If no itinerary exists yet, generate one
+          if (err.response && err.response.status === 404) {
+            const generatedResponse = await apiService.generateItinerary(tripId);
+            setItinerary(generatedResponse.data);
+          } else {
+            throw err;
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching trip data:", error);
+        alert("Could not load trip data. Using sample data instead.");
+        
+        // Fall back to mock data if API fails
         const mockTripDetails = {
           id: tripId,
           origin: { city: 'New York', country: 'USA' },

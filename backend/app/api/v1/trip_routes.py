@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
+import structlog
 
 from app.schemas.trip import (
     TripCreate,
@@ -13,6 +14,8 @@ from app.schemas.trip import (
 )
 from app.services.trip_service import TripService
 from app.services.llm_service import LLMService
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/trips")
 
@@ -33,10 +36,48 @@ async def create_trip_from_natural_language(
     Create a new trip from natural language description
     """
     try:
-        # Just return a successful response for now
-        # In production, you would process this with LLM and create a structured trip
-        return {"id": 123, "has_itinerary": True}
+        if not trip_data.get('natural_language_input'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Natural language input is required"
+            )
+        
+        # Extract structured data from the natural language input
+        natural_language_text = trip_data['natural_language_input']
+        logger.info("Processing natural language input", input=natural_language_text)
+        
+        # Use LLM to extract structured travel intent
+        extracted_data = await llm_service.extract_intent_from_text(natural_language_text)
+        logger.info("Successfully extracted trip data", extracted_data=extracted_data)
+        
+        # Convert extracted data to proper format for trip creation
+        structured_trip_data = {
+            "origin": extracted_data.get("origin", {"city": "Unknown", "country": "Unknown"}),
+            "destinations": extracted_data.get("destinations", [{"city": "Unknown", "country": "Unknown"}]),
+            "start_date": extracted_data.get("start_date", None),
+            "end_date": extracted_data.get("end_date", None),
+            "travelers": extracted_data.get("travelers", {"adults": 1, "children": 0, "infants": 0}),
+            "budget_level": extracted_data.get("budget_level", "MODERATE"),
+            "transport_type": extracted_data.get("transport_type", "AIR"),
+        }
+        
+        # Create the trip using the structured data
+        trip = await trip_service.create_trip(TripCreate(**structured_trip_data))
+        
+        # Add extracted interests as preferences if available
+        if "interests" in extracted_data and extracted_data["interests"]:
+            preferences = {
+                "interests": extracted_data["interests"]
+            }
+            trip = await trip_service.add_preferences(trip.id, TripPreferences(**preferences))
+        
+        return {"id": trip.id, "has_itinerary": True}
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
+        logger.error("Error creating trip from natural language", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating trip from natural language: {str(e)}"

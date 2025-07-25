@@ -72,8 +72,8 @@ class Activity(BaseModel):
 class Accommodation(BaseModel):
     name: str
     location: Location
-    check_in_date: date
-    check_out_date: date
+    check_in_date: Optional[date] = None  # Made optional
+    check_out_date: Optional[date] = None  # Made optional
     booking_url: Optional[str] = None
     cost_estimate: Optional[float] = None
     notes: Optional[str] = None
@@ -81,8 +81,8 @@ class Accommodation(BaseModel):
 
 class Transportation(BaseModel):
     type: str
-    departure_time: Optional[datetime] = None
-    arrival_time: Optional[datetime] = None
+    departure_time: Optional[str] = None  # Changed from datetime to string for flexibility
+    arrival_time: Optional[str] = None  # Changed from datetime to string for flexibility
     departure_location: Optional[Location] = None
     arrival_location: Optional[Location] = None
     booking_reference: Optional[str] = None

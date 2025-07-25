@@ -44,13 +44,29 @@ async def create_trip_from_natural_language(
 
 @router.post("/", response_model=TripResponse, status_code=status.HTTP_201_CREATED)
 async def create_trip(
-    trip_data: TripCreate,
+    trip_data: dict,
     trip_service: TripService = Depends(get_trip_service)
 ):
     """
-    Create a new trip with basic information
+    Create a new trip with basic information and optionally preferences
     """
-    return await trip_service.create_trip(trip_data)
+    # Extract preferences if they exist
+    preferences = None
+    if "preferences" in trip_data:
+        preferences = trip_data.pop("preferences")
+    
+    # Handle 'use_natural_language' flag which isn't in TripCreate schema
+    if "use_natural_language" in trip_data:
+        trip_data.pop("use_natural_language")
+        
+    # Create trip first
+    trip = await trip_service.create_trip(TripCreate(**trip_data))
+    
+    # If preferences were included, add them
+    if preferences:
+        trip = await trip_service.add_preferences(trip.id, TripPreferences(**preferences))
+    
+    return trip
 
 @router.post("/{trip_id}/preferences", response_model=TripResponse)
 async def add_trip_preferences(

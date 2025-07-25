@@ -12,6 +12,11 @@ const api = axios.create({
 const apiService = {
   // Trip endpoints
   createTrip: (tripData) => {
+    // Check if this is a natural language input
+    if (tripData.use_natural_language) {
+      return api.post('/trips/natural', tripData);
+    }
+    // Regular structured trip creation
     return api.post('/trips/', tripData);
   },
   

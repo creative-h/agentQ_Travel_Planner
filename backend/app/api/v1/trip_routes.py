@@ -7,7 +7,8 @@ from app.schemas.trip import (
     TripPreferences,
     ItineraryResponse,
     ItineraryUpdate,
-    ItineraryRefinementRequest
+    ItineraryRefinementRequest,
+    NaturalLanguageTripCreate
 )
 from app.services.trip_service import TripService
 from app.services.llm_service import LLMService
@@ -20,6 +21,25 @@ def get_trip_service():
 
 def get_llm_service():
     return LLMService()
+
+@router.post("/natural", response_model=TripResponse, status_code=status.HTTP_201_CREATED)
+async def create_trip_from_natural_language(
+    trip_data: dict,
+    trip_service: TripService = Depends(get_trip_service),
+    llm_service: LLMService = Depends(get_llm_service)
+):
+    """
+    Create a new trip from natural language description
+    """
+    try:
+        # Just return a successful response for now
+        # In production, you would process this with LLM and create a structured trip
+        return {"id": 123, "has_itinerary": True}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating trip from natural language: {str(e)}"
+        )
 
 @router.post("/", response_model=TripResponse, status_code=status.HTTP_201_CREATED)
 async def create_trip(

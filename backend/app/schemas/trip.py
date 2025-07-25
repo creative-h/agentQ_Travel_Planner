@@ -43,6 +43,11 @@ class TripCreate(BaseModel):
         return v
 
 
+class NaturalLanguageTripCreate(BaseModel):
+    natural_language_input: str = Field(..., description="Natural language description of the trip")
+    use_natural_language: bool = True
+
+
 class TripPreferences(BaseModel):
     interests: List[str] = Field(
         ..., description="List of interests/vibes for the trip destinations"

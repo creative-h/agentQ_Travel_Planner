@@ -204,9 +204,19 @@ async def get_trip(
 @router.get("/{trip_id}/itinerary", response_model=ItineraryResponse)
 async def get_itinerary(
     trip_id: int,
-    trip_service: TripService = Depends(get_trip_service)
+    trip_service: TripService = Depends(get_trip_service),
+    llm_service: LLMService = Depends(get_llm_service)
 ):
     """
-    Get itinerary for a trip
+    Get itinerary for a trip, generating one if it doesn't exist
     """
-    return await trip_service.get_itinerary(trip_id)
+    try:
+        # First try to get an existing itinerary
+        return await trip_service.get_itinerary(trip_id)
+    except ValueError as e:
+        # If no itinerary exists, generate one on the fly
+        if "Itinerary not found" in str(e):
+            logger.info(f"Automatically generating itinerary for trip {trip_id}")
+            return await trip_service.generate_itinerary(trip_id, llm_service)
+        # Re-raise other exceptions
+        raise

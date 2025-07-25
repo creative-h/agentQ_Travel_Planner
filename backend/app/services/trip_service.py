@@ -1,7 +1,9 @@
 import structlog
-from typing import Optional
-from datetime import datetime, date
+from typing import Optional, Dict, Any
+from datetime import datetime, date, timedelta
 import json
+import os
+import time
 
 from app.schemas.trip import (
     TripCreate,
@@ -16,28 +18,65 @@ from app.services.llm_service import LLMService
 
 logger = structlog.get_logger(__name__)
 
+# Global storage to persist between requests
+# Note: This is still not fully persistent across server restarts
+# but should work better for demonstration purposes
+_GLOBAL_TRIPS: Dict[int, Dict[str, Any]] = {}
+_GLOBAL_ITINERARIES: Dict[int, Dict[str, Any]] = {}
+_NEXT_TRIP_ID = 1
+
 class TripService:
     """
     Service for managing trips and itineraries
     
     Note: In a production environment, this would interact with a database.
-    For this implementation, we're using in-memory storage as a placeholder.
+    For this implementation, we're using shared in-memory storage as a placeholder.
     """
     
     def __init__(self):
-        # In-memory storage for demonstration
-        # In production, you would use a database
-        self.trips = {}
-        self.itineraries = {}
-        self.next_trip_id = 1
+        # Using global variables to maintain state between requests
+        # This is still not persistent across server restarts
+        # but improves the demo experience
+        global _GLOBAL_TRIPS, _GLOBAL_ITINERARIES, _NEXT_TRIP_ID
+        self.trips = _GLOBAL_TRIPS
+        self.itineraries = _GLOBAL_ITINERARIES
+        
+        # For demonstration purposes: if trips is empty, add a sample trip
+        if not self.trips:
+            self._create_sample_trip()
+    
+    def _create_sample_trip(self):
+        """Create a sample trip for demonstration purposes"""
+        global _NEXT_TRIP_ID
+        trip_id = _NEXT_TRIP_ID
+        _NEXT_TRIP_ID += 1
+        
+        now = datetime.now()
+        sample_trip = {
+            "id": trip_id,
+            "origin": {"city": "New York", "country": "USA"},
+            "destinations": [{"city": "Paris", "country": "France"}],
+            "start_date": (now + timedelta(days=30)).date().isoformat(),
+            "end_date": (now + timedelta(days=35)).date().isoformat(),
+            "travelers": {"adults": 2, "children": 0, "infants": 0},
+            "budget_level": "moderate",
+            "transport_type": "air",
+            "created_at": now,
+            "updated_at": now,
+            "has_itinerary": False,
+            "preferences": {"interests": ["food", "culture", "history"]}
+        }
+        self.trips[trip_id] = sample_trip
+        logger.info("Created sample trip", trip_id=trip_id)
     
     async def create_trip(self, trip_data: TripCreate) -> TripResponse:
         """
         Create a new trip with basic information
         """
         try:
-            trip_id = self.next_trip_id
-            self.next_trip_id += 1
+            global _NEXT_TRIP_ID
+            trip_id = _NEXT_TRIP_ID
+            _NEXT_TRIP_ID += 1
             
             now = datetime.now()
             

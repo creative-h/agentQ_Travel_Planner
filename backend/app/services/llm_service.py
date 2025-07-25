@@ -2,6 +2,7 @@ import json
 from typing import Dict, List, Any, Optional
 import structlog
 import aiohttp
+from datetime import datetime, date, timedelta
 from pydantic import ValidationError
 
 from app.config.settings import settings
@@ -246,13 +247,11 @@ class LLMService:
                                 day_date = trip_data.start_date + timedelta(days=day_num)
                                 day["date"] = day_date.strftime("%Y-%m-%d")
                             else:
-                                from datetime import datetime
                                 today = datetime.now().date()
                                 day["date"] = today.strftime("%Y-%m-%d")
                     except Exception as e:
                         logger.warning(f"Error processing date for day {day.get('day_number', '?')}: {str(e)}")
                         # Use today's date as fallback
-                        from datetime import datetime
                         day["date"] = datetime.now().date().strftime("%Y-%m-%d")
                     
                     # Process transportation to ensure it has valid times
@@ -305,7 +304,6 @@ class LLMService:
                 end_date = trip_data.end_date
                 duration = (end_date - start_date).days + 1
             else:
-                from datetime import datetime, timedelta
                 start_date = datetime.now().date() + timedelta(days=30)
                 duration = 3
                 end_date = start_date + timedelta(days=duration-1)

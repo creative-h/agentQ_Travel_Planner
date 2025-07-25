@@ -18,167 +18,169 @@ const ItineraryPage = () => {
       try {
         setLoading(true);
         
-        // Get trip details from the API
-        const tripResponse = await apiService.getTrip(tripId);
-        const tripData = tripResponse.data;
-        setTripDetails(tripData);
-        
-        // Try to get itinerary if it exists
         try {
-          const itineraryResponse = await apiService.getItinerary(tripId);
-          setItinerary(itineraryResponse.data);
-        } catch (err) {
-          // If no itinerary exists yet, generate one
-          if (err.response && err.response.status === 404) {
-            const generatedResponse = await apiService.generateItinerary(tripId);
-            setItinerary(generatedResponse.data);
-          } else {
-            throw err;
+          // Get trip details from the API
+          const tripResponse = await apiService.getTrip(tripId);
+          const tripData = tripResponse.data;
+          setTripDetails(tripData);
+          
+          // Try to get itinerary if it exists
+          try {
+            const itineraryResponse = await apiService.getItinerary(tripId);
+            setItinerary(itineraryResponse.data);
+          } catch (err) {
+            // If no itinerary exists yet, generate one
+            if (err.response && err.response.status === 404) {
+              const generatedResponse = await apiService.generateItinerary(tripId);
+              setItinerary(generatedResponse.data);
+            } else {
+              throw err;
+            }
           }
-        }
-      } catch (error) {
-        console.error("Error fetching trip data:", error);
-        alert("Could not load trip data. Using sample data instead.");
-        
-        // Fall back to mock data if API fails
-        const mockTripDetails = {
-          id: tripId,
-          origin: { city: 'New York', country: 'USA' },
-          destinations: [{ city: 'Paris', country: 'France' }],
-          start_date: '2025-07-15',
-          end_date: '2025-07-22',
-          travelers: { adults: 2, children: 0, infants: 0 },
-          budget_level: 'MODERATE',
-          transport_type: 'AIR',
-          preferences: {
-            interests: ['art', 'history', 'food', 'sightseeing']
-          }
-        };
-        
-        const mockItinerary = {
-          trip_id: tripId,
-          ai_generated: true,
-          total_cost_estimate: 3500,
-          days: [
-            {
-              day_number: 1,
-              date: '2025-07-15',
-              activities: [
-                {
-                  name: 'Eiffel Tower Visit',
-                  description: 'Visit the iconic Eiffel Tower and enjoy panoramic views of Paris',
+        } catch (apiError) {
+          console.error("Error fetching trip data:", apiError);
+          alert("Could not load trip data. Using sample data instead.");
+          
+          // Fall back to mock data if API fails
+          const mockTripDetails = {
+            id: tripId,
+            origin: { city: 'New York', country: 'USA' },
+            destinations: [{ city: 'Paris', country: 'France' }],
+            start_date: '2025-07-15',
+            end_date: '2025-07-22',
+            travelers: { adults: 2, children: 0, infants: 0 },
+            budget_level: 'MODERATE',
+            transport_type: 'AIR',
+            preferences: {
+              interests: ['art', 'history', 'food', 'sightseeing']
+            }
+          };
+          
+          const mockItinerary = {
+            trip_id: tripId,
+            ai_generated: true,
+            total_cost_estimate: 3500,
+            days: [
+              {
+                day_number: 1,
+                date: '2025-07-15',
+                activities: [
+                  {
+                    name: 'Eiffel Tower Visit',
+                    description: 'Visit the iconic Eiffel Tower and enjoy panoramic views of Paris',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '10:00',
+                    end_time: '12:30',
+                    cost_estimate: 25.50
+                  },
+                  {
+                    name: 'Seine River Cruise',
+                    description: 'Relaxing cruise along the Seine River to see Paris from a different perspective',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '14:00',
+                    end_time: '15:30',
+                    cost_estimate: 15.00
+                  },
+                  {
+                    name: 'Dinner at Le Jules Verne',
+                    description: 'Fine dining experience with views of the city',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '19:00',
+                    end_time: '21:00',
+                    cost_estimate: 200.00
+                  }
+                ],
+                meals: [
+                  {
+                    name: 'Breakfast at Hotel',
+                    description: 'Continental breakfast',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '08:00',
+                    cost_estimate: 0
+                  },
+                  {
+                    name: 'Lunch at Café de Flore',
+                    description: 'Classic Parisian café experience',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '13:00',
+                    cost_estimate: 30.00
+                  }
+                ],
+                accommodation: {
+                  name: 'Hotel Paris Center',
                   location: { city: 'Paris', country: 'France' },
-                  start_time: '10:00',
-                  end_time: '12:30',
-                  cost_estimate: 25.50
-                },
-                {
-                  name: 'Seine River Cruise',
-                  description: 'Relaxing cruise along the Seine River to see Paris from a different perspective',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '14:00',
-                  end_time: '15:30',
-                  cost_estimate: 15.00
-                },
-                {
-                  name: 'Dinner at Le Jules Verne',
-                  description: 'Fine dining experience with views of the city',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '19:00',
-                  end_time: '21:00',
+                  check_in_date: '2025-07-15',
+                  check_out_date: '2025-07-22',
                   cost_estimate: 200.00
                 }
-              ],
-              meals: [
-                {
-                  name: 'Breakfast at Hotel',
-                  description: 'Continental breakfast',
+              },
+              {
+                day_number: 2,
+                date: '2025-07-16',
+                activities: [
+                  {
+                    name: 'Louvre Museum',
+                    description: 'Explore one of the world\'s largest art museums',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '09:00',
+                    end_time: '13:00',
+                    cost_estimate: 17.00
+                  },
+                  {
+                    name: 'Luxembourg Gardens',
+                    description: 'Relax in these beautiful gardens',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '14:30',
+                    end_time: '16:00',
+                    cost_estimate: 0
+                  },
+                  {
+                    name: 'Shopping at Champs-Élysées',
+                    description: 'Shopping at one of the world\'s most famous avenues',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '16:30',
+                    end_time: '18:30',
+                    cost_estimate: 100.00
+                  }
+                ],
+                meals: [
+                  {
+                    name: 'Breakfast at Hotel',
+                    description: 'Continental breakfast',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '08:00',
+                    cost_estimate: 0
+                  },
+                  {
+                    name: 'Lunch at Angelina',
+                    description: 'Famous for their hot chocolate and pastries',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '13:30',
+                    cost_estimate: 25.00
+                  },
+                  {
+                    name: 'Dinner at Le Comptoir',
+                    description: 'Classic French bistro',
+                    location: { city: 'Paris', country: 'France' },
+                    start_time: '19:30',
+                    cost_estimate: 45.00
+                  }
+                ],
+                accommodation: {
+                  name: 'Hotel Paris Center',
                   location: { city: 'Paris', country: 'France' },
-                  start_time: '08:00',
-                  cost_estimate: 0
-                },
-                {
-                  name: 'Lunch at Café de Flore',
-                  description: 'Classic Parisian café experience',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '13:00',
-                  cost_estimate: 30.00
+                  check_in_date: '2025-07-15',
+                  check_out_date: '2025-07-22',
+                  cost_estimate: 200.00
                 }
-              ],
-              accommodation: {
-                name: 'Hotel Paris Center',
-                location: { city: 'Paris', country: 'France' },
-                check_in_date: '2025-07-15',
-                check_out_date: '2025-07-22',
-                cost_estimate: 200.00
               }
-            },
-            {
-              day_number: 2,
-              date: '2025-07-16',
-              activities: [
-                {
-                  name: 'Louvre Museum',
-                  description: 'Explore one of the world\'s largest art museums',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '09:00',
-                  end_time: '13:00',
-                  cost_estimate: 17.00
-                },
-                {
-                  name: 'Luxembourg Gardens',
-                  description: 'Relax in these beautiful gardens',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '14:30',
-                  end_time: '16:00',
-                  cost_estimate: 0
-                },
-                {
-                  name: 'Shopping at Champs-Élysées',
-                  description: 'Shopping at one of the world\'s most famous avenues',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '16:30',
-                  end_time: '18:30',
-                  cost_estimate: 100.00
-                }
-              ],
-              meals: [
-                {
-                  name: 'Breakfast at Hotel',
-                  description: 'Continental breakfast',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '08:00',
-                  cost_estimate: 0
-                },
-                {
-                  name: 'Lunch at Angelina',
-                  description: 'Famous for their hot chocolate and pastries',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '13:30',
-                  cost_estimate: 25.00
-                },
-                {
-                  name: 'Dinner at Le Comptoir',
-                  description: 'Classic French bistro',
-                  location: { city: 'Paris', country: 'France' },
-                  start_time: '19:30',
-                  cost_estimate: 45.00
-                }
-              ],
-              accommodation: {
-                name: 'Hotel Paris Center',
-                location: { city: 'Paris', country: 'France' },
-                check_in_date: '2025-07-15',
-                check_out_date: '2025-07-22',
-                cost_estimate: 200.00
-              }
-            }
-            // Additional days would be added here in a real application
-          ]
-        };
+              // Additional days would be added here in a real application
+            ]
+          };
 
-        setTripDetails(mockTripDetails);
-        setItinerary(mockItinerary);
+          setTripDetails(mockTripDetails);
+          setItinerary(mockItinerary);
+        }
       } catch (error) {
         console.error('Error fetching itinerary:', error);
       } finally {

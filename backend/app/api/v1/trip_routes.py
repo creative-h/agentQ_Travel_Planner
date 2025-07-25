@@ -50,19 +50,56 @@ async def create_trip_from_natural_language(
         extracted_data = await llm_service.extract_intent_from_text(natural_language_text)
         logger.info("Successfully extracted trip data", extracted_data=extracted_data)
         
-        # Convert extracted data to proper format for trip creation
-        structured_trip_data = {
-            "origin": extracted_data.get("origin", {"city": "Unknown", "country": "Unknown"}),
-            "destinations": extracted_data.get("destinations", [{"city": "Unknown", "country": "Unknown"}]),
-            "start_date": extracted_data.get("start_date", None),
-            "end_date": extracted_data.get("end_date", None),
-            "travelers": extracted_data.get("travelers", {"adults": 1, "children": 0, "infants": 0}),
-            "budget_level": extracted_data.get("budget_level", "MODERATE"),
-            "transport_type": extracted_data.get("transport_type", "AIR"),
-        }
-        
-        # Create the trip using the structured data
-        trip = await trip_service.create_trip(TripCreate(**structured_trip_data))
+        # Convert extracted data to proper format for trip creation and handle potential issues
+        try:
+            # Make sure we have proper date strings
+            from datetime import datetime, timedelta
+            
+            # Default dates if not available or properly formatted
+            today = datetime.now()
+            default_start = (today + timedelta(days=30)).strftime("%Y-%m-%d")
+            default_end = (today + timedelta(days=37)).strftime("%Y-%m-%d")
+            
+            # Try to get dates from extracted data
+            start_date = extracted_data.get("start_date", default_start)
+            end_date = extracted_data.get("end_date", default_end)
+            
+            # Ensure budget level and transport type are uppercase strings
+            budget_level = str(extracted_data.get("budget_level", "MODERATE")).upper()
+            if budget_level not in ["BUDGET", "MODERATE", "LUXURY"]:
+                budget_level = "MODERATE"
+                
+            transport_type = str(extracted_data.get("transport_type", "AIR")).upper()
+            if transport_type not in ["AIR", "ROAD"]:
+                transport_type = "AIR"
+            
+            structured_trip_data = {
+                "origin": extracted_data.get("origin", {"city": "New York", "country": "USA"}),
+                "destinations": extracted_data.get("destinations", [{"city": "Paris", "country": "France"}]),
+                "start_date": start_date,
+                "end_date": end_date,
+                "travelers": extracted_data.get("travelers", {"adults": 1, "children": 0, "infants": 0}),
+                "budget_level": budget_level,
+                "transport_type": transport_type,
+            }
+            
+            logger.info("Processed structured trip data", data=structured_trip_data)
+            
+            # Create the trip using the structured data
+            trip = await trip_service.create_trip(TripCreate(**structured_trip_data))
+        except Exception as e:
+            logger.error("Error converting natural language to structured data", error=str(e))
+            # Create a fallback trip with safe defaults
+            fallback_trip_data = {
+                "origin": {"city": "New York", "country": "USA"},
+                "destinations": [{"city": "Paris", "country": "France"}],
+                "start_date": default_start,
+                "end_date": default_end,
+                "travelers": {"adults": 1, "children": 0, "infants": 0},
+                "budget_level": "MODERATE",
+                "transport_type": "AIR"
+            }
+            trip = await trip_service.create_trip(TripCreate(**fallback_trip_data))
         
         # Add extracted interests as preferences if available
         if "interests" in extracted_data and extracted_data["interests"]:

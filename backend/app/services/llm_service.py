@@ -267,6 +267,31 @@ class LLMService:
                             if not transport.get("arrival_time") or not isinstance(transport["arrival_time"], str):
                                 transport["arrival_time"] = "09:00"
                     
+                    # Process accommodation to ensure it has all required fields
+                    if "accommodation" in day:
+                        accommodation = day["accommodation"]
+                        
+                        # Try to get destination from the day's activities or use default
+                        day_dest = "Paris"
+                        day_country = "France"
+                        
+                        # Extract destination from activities if available
+                        if "activities" in day and day["activities"] and "location" in day["activities"][0]:
+                            act_location = day["activities"][0]["location"]
+                            if act_location.get("city"):
+                                day_dest = act_location["city"]
+                            if act_location.get("country"):
+                                day_country = act_location["country"]
+                        
+                        if not accommodation.get("name"):
+                            accommodation["name"] = f"Hotel in {day_dest}"
+                            
+                        if not accommodation.get("location"):
+                            accommodation["location"] = {
+                                "city": day_dest,
+                                "country": day_country
+                            }
+                    
                     processed_days.append(day)
                 
                 # Create itinerary object

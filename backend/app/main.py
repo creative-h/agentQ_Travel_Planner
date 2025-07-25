@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import api_router
 from app.config.settings import settings
+from app.middleware.cors_middleware import CustomCORSMiddleware
 
 app = FastAPI(
     title="TriprTrek API",
@@ -10,7 +11,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS - make it as permissive as possible for development
+# Add our custom CORS middleware first (will be executed last)
+app.add_middleware(CustomCORSMiddleware)
+
+# Configure built-in CORS as well for redundancy
 app.add_middleware(
     CORSMiddleware,
     # Allow all origins for development

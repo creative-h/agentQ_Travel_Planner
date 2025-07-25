@@ -145,3 +145,9 @@ class TripResponse(Trip):
 
 class ItineraryResponse(Itinerary):
     pass
+
+
+class NaturalLanguageTripResponse(BaseModel):
+    """Simplified response model for natural language trip creation"""
+    id: int
+    has_itinerary: bool = False

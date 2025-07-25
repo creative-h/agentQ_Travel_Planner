@@ -8,7 +8,8 @@ from app.schemas.trip import (
     ItineraryResponse,
     ItineraryUpdate,
     ItineraryRefinementRequest,
-    NaturalLanguageTripCreate
+    NaturalLanguageTripCreate,
+    NaturalLanguageTripResponse
 )
 from app.services.trip_service import TripService
 from app.services.llm_service import LLMService
@@ -22,7 +23,7 @@ def get_trip_service():
 def get_llm_service():
     return LLMService()
 
-@router.post("/natural", response_model=TripResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/natural", response_model=NaturalLanguageTripResponse, status_code=status.HTTP_201_CREATED)
 async def create_trip_from_natural_language(
     trip_data: dict,
     trip_service: TripService = Depends(get_trip_service),

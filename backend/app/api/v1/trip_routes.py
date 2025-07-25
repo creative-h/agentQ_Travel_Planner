@@ -64,14 +64,14 @@ async def create_trip_from_natural_language(
             start_date = extracted_data.get("start_date", default_start)
             end_date = extracted_data.get("end_date", default_end)
             
-            # Ensure budget level and transport type are uppercase strings
-            budget_level = str(extracted_data.get("budget_level", "MODERATE")).upper()
-            if budget_level not in ["BUDGET", "MODERATE", "LUXURY"]:
-                budget_level = "MODERATE"
+            # Ensure budget level and transport type are lowercase strings to match the enum in the schema
+            budget_level = str(extracted_data.get("budget_level", "moderate")).lower()
+            if budget_level not in ["budget", "moderate", "luxury"]:
+                budget_level = "moderate"
                 
-            transport_type = str(extracted_data.get("transport_type", "AIR")).upper()
-            if transport_type not in ["AIR", "ROAD"]:
-                transport_type = "AIR"
+            transport_type = str(extracted_data.get("transport_type", "air")).lower()
+            if transport_type not in ["air", "road"]:
+                transport_type = "air"
             
             structured_trip_data = {
                 "origin": extracted_data.get("origin", {"city": "New York", "country": "USA"}),
@@ -96,8 +96,8 @@ async def create_trip_from_natural_language(
                 "start_date": default_start,
                 "end_date": default_end,
                 "travelers": {"adults": 1, "children": 0, "infants": 0},
-                "budget_level": "MODERATE",
-                "transport_type": "AIR"
+                "budget_level": "moderate",
+                "transport_type": "air"
             }
             trip = await trip_service.create_trip(TripCreate(**fallback_trip_data))
         

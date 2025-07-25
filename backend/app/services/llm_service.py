@@ -61,8 +61,8 @@ class LLMService:
             - start_date (YYYY-MM-DD string)
             - end_date (YYYY-MM-DD string)
             - travelers (object with adults, children, infants as integers)
-            - budget_level (string: "BUDGET", "MODERATE", or "LUXURY")
-            - transport_type (string: "AIR" or "ROAD")
+            - budget_level (string: "budget", "moderate", or "luxury")
+            - transport_type (string: "air" or "road")
             - interests (array of strings)
             
             Text: {text}
@@ -75,8 +75,8 @@ class LLMService:
               "start_date": "2025-08-01",
               "end_date": "2025-08-05",
               "travelers": {{ "adults": 2, "children": 0, "infants": 0 }},
-              "budget_level": "MODERATE",
-              "transport_type": "AIR",
+              "budget_level": "moderate",
+              "transport_type": "air",
               "interests": ["art", "food", "history"]
             }}
             """
@@ -110,8 +110,8 @@ class LLMService:
                     "start_date": "2025-08-01",
                     "end_date": "2025-08-05",
                     "travelers": {"adults": 1, "children": 0, "infants": 0},
-                    "budget_level": "MODERATE",
-                    "transport_type": "AIR",
+                    "budget_level": "moderate",
+                    "transport_type": "air",
                     "interests": ["sightseeing"]
                 }
             
@@ -127,8 +127,8 @@ class LLMService:
                 "start_date": "2025-08-01",
                 "end_date": "2025-08-05",
                 "travelers": {"adults": 1, "children": 0, "infants": 0},
-                "budget_level": "MODERATE",
-                "transport_type": "AIR",
+                "budget_level": "moderate",
+                "transport_type": "air",
                 "interests": ["sightseeing"]
             }
 

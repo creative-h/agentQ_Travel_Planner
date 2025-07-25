@@ -159,7 +159,12 @@ class LLMService:
             # Get preferences
             interests = []
             if hasattr(trip_data, "preferences") and trip_data.preferences:
-                interests = trip_data.preferences.get("interests", [])
+                # Handle both dictionary and object cases
+                if isinstance(trip_data.preferences, dict):
+                    interests = trip_data.preferences.get("interests", [])
+                elif hasattr(trip_data.preferences, "interests"):
+                    # Access as an object property
+                    interests = trip_data.preferences.interests if trip_data.preferences.interests else []
                 
             interests_str = ", ".join(interests) if interests else "general sightseeing"
             

@@ -19,6 +19,21 @@ const ItineraryPage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
 
+  // Update total cost when itinerary or selected package changes
+  useEffect(() => {
+    if (itinerary) {
+      // If a package is selected, use its price
+      if (selectedPackage && selectedPackage.totalPrice) {
+        setTotalCost(selectedPackage.totalPrice);
+      } else if (itinerary.total_cost_estimate) {
+        // Otherwise use the itinerary's estimated cost
+        setTotalCost(itinerary.total_cost_estimate);
+      } else {
+        setTotalCost(0);
+      }
+    }
+  }, [itinerary, selectedPackage]);
+
   useEffect(() => {
     // Fetch real data from the API
     const fetchData = async () => {
@@ -32,17 +47,16 @@ const ItineraryPage = () => {
         try {
           const itineraryResponse = await apiService.getItinerary(tripId);
           setItinerary(itineraryResponse.data);
-          setTotalCost(itineraryResponse.data.total_cost_estimate);
         } catch (err) {
           // If no itinerary exists yet, generate one
           if (err.response && err.response.status === 404) {
             const generatedResponse = await apiService.generateItinerary(tripId);
             setItinerary(generatedResponse.data);
-            setTotalCost(generatedResponse.data.total_cost_estimate);
           } else {
-            throw err;
+            console.error("Error fetching itinerary:", err);
           }
-        } catch (apiError) {
+        }
+      } catch (apiError) {
           console.error("Error fetching trip data:", apiError);
           alert("Could not load trip data. Using sample data instead.");
           
@@ -237,11 +251,17 @@ const ItineraryPage = () => {
         // Create an updated version of the package with new pricing
         const updatedPackage = { ...selectedPackage };
         // Adjust package price based on new itinerary total
-        const percentageIncrease = updatedItineraryResponse.data.total_cost_estimate / totalCost;
-        updatedPackage.totalPrice = Math.round(updatedPackage.totalPrice * percentageIncrease);
+        const currentCost = totalCost || 1; // Prevent division by zero
+        const newCost = updatedItineraryResponse.data.total_cost_estimate || currentCost;
+        const percentageIncrease = newCost / currentCost;
+        updatedPackage.totalPrice = Math.round((updatedPackage.totalPrice || 0) * percentageIncrease);
         // Update flight and hotel prices proportionally
-        updatedPackage.flight.price = Math.round(updatedPackage.flight.price * percentageIncrease);
-        updatedPackage.hotel.pricePerNight = Math.round(updatedPackage.hotel.pricePerNight * percentageIncrease);
+        if (updatedPackage.flight && typeof updatedPackage.flight.price === 'number') {
+          updatedPackage.flight.price = Math.round(updatedPackage.flight.price * percentageIncrease);
+        }
+        if (updatedPackage.hotel && typeof updatedPackage.hotel.pricePerNight === 'number') {
+          updatedPackage.hotel.pricePerNight = Math.round(updatedPackage.hotel.pricePerNight * percentageIncrease);
+        }
         setSelectedPackage(updatedPackage);
       }
       
@@ -308,7 +328,7 @@ const ItineraryPage = () => {
             )}
             <div className="flex items-center gap-2">
               <span className="font-semibold">Budget:</span>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">${totalCost.toFixed(2)}</span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">${(totalCost || 0).toFixed(2)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold">Duration:</span>

@@ -77,12 +77,12 @@ const PackageCard = ({ travelPackage, onSelect, isSelected = false }) => {
   };
 
   return (
-    <div className={`${isSelected ? 'ring-2 ring-offset-2' : ''} ${isSelected && type.toLowerCase() === 'religious' ? 'ring-purple-600' : isSelected && type.toLowerCase() === 'thrill' ? 'ring-orange-600' : isSelected ? 'ring-blue-600' : ''} bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl`}>
+    <div className={`${isSelected ? 'ring-2 ring-offset-2' : ''} ${isSelected && type && type.toLowerCase() === 'religious' ? 'ring-purple-600' : isSelected && type && type.toLowerCase() === 'thrill' ? 'ring-orange-600' : isSelected ? 'ring-blue-600' : ''} bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl`}>
       <div className={`${getBgColor()} p-3 border-b flex items-center justify-between`}>
         <div className="flex items-center">
           <PackageTypeIcon type={type} className={`h-6 w-6 mr-2 ${getAccentColor()}`} />
           <span className={`text-sm font-semibold uppercase ${getAccentColor()}`}>
-            {type} Package
+            {type || 'Custom'} Package
           </span>
         </div>
         {travelPackage.badge && (

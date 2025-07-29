@@ -239,7 +239,7 @@ const ItineraryPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Sticky Trip Summary Banner */}
-      <div className="sticky top-0 z-10 bg-white shadow-md p-4 rounded-lg mb-6">
+      <div className="sticky top-0 z-50 bg-white shadow-md p-4 rounded-lg mb-6">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center">
           <div>
             <h2 className="text-2xl font-bold">{tripDetails.destinations[0].city} Itinerary</h2>

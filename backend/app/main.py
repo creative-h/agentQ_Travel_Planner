@@ -74,6 +74,11 @@ async def general_exception_handler(request: Request, exc: Exception):
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
     return response
 
+# Add a health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "version": "1.0.0"}
+
 # Include API routes
 app.include_router(api_router)
 

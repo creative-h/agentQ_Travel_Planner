@@ -4,10 +4,15 @@ import { PACKAGE_TYPES } from '../../types';
 
 const PackageSelector = ({ itinerary, tripDetails, onSelectPackage }) => {
   const [packages, setPackages] = useState([]);
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   
   // Generate package recommendations based on trip details and itinerary
+  // The useEffect will re-run whenever the itinerary changes
   useEffect(() => {
     if (!itinerary || !tripDetails) return;
+    
+    // Update the timestamp to indicate fresh recommendations after refinement
+    setLastUpdateTime(Date.now());
     
     const destination = tripDetails.destinations[0].city;
     const duration = itinerary.days.length;
@@ -175,8 +180,15 @@ const PackageSelector = ({ itinerary, tripDetails, onSelectPackage }) => {
   
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Recommended Travel Packages</h2>
-      <p className="text-gray-600 mb-6">Choose a package that fits your travel style. Each option offers a unique experience tailored to different preferences.</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-1">Recommended Travel Packages</h2>
+          <p className="text-gray-600">Choose a package that fits your travel style. Each option offers a unique experience.</p>
+        </div>
+        <div className="mt-2 md:mt-0 text-sm text-gray-500">
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Updated {new Date(lastUpdateTime).toLocaleTimeString()}</span>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {packages.map(pkg => (

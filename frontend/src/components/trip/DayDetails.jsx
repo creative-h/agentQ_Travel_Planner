@@ -11,7 +11,7 @@ const DayDetails = ({ day, onUpdateDay }) => {
       const result = await onUpdateDay(request);
       // Hide chat after successful submission
       if (result.success) {
-        setTimeout(() => setShowChat(false), 2000);
+        setShowChat(false);
       }
       return result;
     } catch (error) {

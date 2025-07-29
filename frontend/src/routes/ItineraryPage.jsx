@@ -226,6 +226,9 @@ const ItineraryPage = () => {
       const updatedItineraryResponse = await apiService.getItinerary(tripId);
       setItinerary(updatedItineraryResponse.data);
       
+      // Close the day details modal if it's open
+      setShowDayDetails(false);
+      
       // Return the response to the ChatRefinement component
       return { 
         success: true, 
@@ -363,16 +366,6 @@ const ItineraryPage = () => {
             </div>
           </div>
 
-          {/* Map */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="text-lg font-semibold">Day {currentDayItinerary.day_number} Map</h3>
-            </div>
-            <div className="h-80">
-              <ItineraryMap day={currentDayItinerary} />
-            </div>
-          </div>
-
           {/* Accommodation Summary */}
           {currentDayItinerary.accommodation && (
             <div className="card">
@@ -405,6 +398,16 @@ const ItineraryPage = () => {
               <ChatRefinement onSubmit={handleRefinementSubmit} currentDay={activeDay} />
             </div>
           </div>
+          
+          {/* Map - Moved to the bottom */}
+          <div className="card">
+            <div className="card-header">
+              <h3 className="text-lg font-semibold">Day {currentDayItinerary.day_number} Map</h3>
+            </div>
+            <div className="h-80">
+              <ItineraryMap day={currentDayItinerary} />
+            </div>
+          </div>
         </div>
       </div>
       
@@ -413,7 +416,7 @@ const ItineraryPage = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl my-8 relative">
             <button 
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl font-bold"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl font-bold z-50"
               onClick={handleCloseDayDetails}
             >
               &times;

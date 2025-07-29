@@ -206,8 +206,8 @@ const ItineraryPage = () => {
         setLoading(false);
       }
     };
-
-    fetchItinerary();
+    
+    fetchData();
   }, [tripId]);
 
   const handleDayChange = (dayNumber) => {

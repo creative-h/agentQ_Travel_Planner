@@ -3,6 +3,9 @@ import { useParams } from 'react-router-dom';
 import ItineraryTimeline from '../components/trip/ItineraryTimeline';
 import ItineraryMap from '../components/trip/ItineraryMap';
 import ChatRefinement from '../components/trip/ChatRefinement';
+import DayDetails from '../components/trip/DayDetails';
+import PackageSelector from '../components/trip/PackageSelector';
+import CheckoutPage from '../components/trip/CheckoutPage';
 import apiService from '../services/apiService';
 
 const ItineraryPage = () => {
@@ -11,6 +14,9 @@ const ItineraryPage = () => {
   const [tripDetails, setTripDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeDay, setActiveDay] = useState(1);
+  const [showDayDetails, setShowDayDetails] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [showCheckout, setShowCheckout] = useState(false);
 
   useEffect(() => {
     // Fetch real data from the API
@@ -193,6 +199,20 @@ const ItineraryPage = () => {
 
   const handleDayChange = (dayNumber) => {
     setActiveDay(dayNumber);
+    setShowDayDetails(true);
+  };
+  
+  const handleSelectPackage = (pkg) => {
+    setSelectedPackage(pkg);
+    setShowCheckout(true);
+  };
+  
+  const handleCloseCheckout = () => {
+    setShowCheckout(false);
+  };
+  
+  const handleCloseDayDetails = () => {
+    setShowDayDetails(false);
   };
 
   const handleRefinementSubmit = async (request) => {
@@ -260,6 +280,15 @@ const ItineraryPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Package Recommendation Section */}
+      <div className="mb-8">
+        <PackageSelector 
+          itinerary={itinerary} 
+          tripDetails={tripDetails} 
+          onSelectPackage={handleSelectPackage}
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Left sidebar - Day selector */}
@@ -315,6 +344,25 @@ const ItineraryPage = () => {
 
         {/* Main content area */}
         <div className="md:col-span-2 space-y-8">
+          {/* Your Day Itinerary Section */}
+          <div className="card">
+            <div className="card-header">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Your Day {currentDayItinerary.day_number} Itinerary</h3>
+                <button 
+                  onClick={() => setShowDayDetails(true)}
+                  className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-1 rounded-lg text-sm font-medium"
+                >
+                  View Details
+                </button>
+              </div>
+              <p className="text-sm text-gray-500">{currentDayItinerary.date}</p>
+            </div>
+            <div className="card-body p-0 md:p-4">
+              <ItineraryTimeline day={currentDayItinerary} />
+            </div>
+          </div>
+
           {/* Map */}
           <div className="card">
             <div className="card-header">
@@ -325,18 +373,7 @@ const ItineraryPage = () => {
             </div>
           </div>
 
-          {/* Timeline */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="text-lg font-semibold">Day {currentDayItinerary.day_number} Schedule</h3>
-              <p className="text-sm text-gray-500">{currentDayItinerary.date}</p>
-            </div>
-            <div className="card-body">
-              <ItineraryTimeline day={currentDayItinerary} />
-            </div>
-          </div>
-
-          {/* Accommodation */}
+          {/* Accommodation Summary */}
           {currentDayItinerary.accommodation && (
             <div className="card">
               <div className="card-header">
@@ -370,6 +407,33 @@ const ItineraryPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Day Details Modal */}
+      {showDayDetails && currentDayItinerary && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl my-8 relative">
+            <button 
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl font-bold"
+              onClick={handleCloseDayDetails}
+            >
+              &times;
+            </button>
+            <DayDetails 
+              day={currentDayItinerary} 
+              onUpdateDay={handleRefinementSubmit}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Checkout Modal */}
+      {showCheckout && selectedPackage && (
+        <CheckoutPage 
+          selectedPackage={selectedPackage} 
+          tripDetails={tripDetails}
+          onClose={handleCloseCheckout}
+        />
+      )}
     </div>
   );
 };

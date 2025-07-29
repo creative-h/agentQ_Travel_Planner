@@ -56,17 +56,24 @@ class LLMService:
         """
         try:
             prompt = f"""
-            Extract structured travel intent from the following text. Return a JSON object with:
+            You are a professional travel planner and expert. Extract detailed structured travel intent from the following text for creating a well-designed and thoughtful trip plan.
+            
+            Return a JSON object with:
             - origin (city, country object with city and country fields)
-            - destinations (array of objects with city and country fields)
+            - destinations (array of objects with city and country fields in order of visit)
             - start_date (YYYY-MM-DD string)
             - end_date (YYYY-MM-DD string)
             - travelers (object with adults, children, infants as integers)
             - budget_level (string: "budget", "moderate", or "luxury")
             - transport_type (string: "air" or "road")
-            - interests (array of strings)
+            - interests (array of strings - be comprehensive and include at least 5-8 relevant interests based on the text)
             
             Text: {text}
+            
+            Be thoughtful about inferring interests even if not explicitly mentioned. Consider the destination, duration, and any clues in the text.
+            If dates are not specified, use dates approximately 1 month from now.
+            If budget is not specified, infer it from the style of travel described.
+            If traveler counts are not specified, assume 1 adult.
             
             Return ONLY valid JSON without any explanations or additional text.
             Example response format:
@@ -78,7 +85,7 @@ class LLMService:
               "travelers": {{ "adults": 2, "children": 0, "infants": 0 }},
               "budget_level": "moderate",
               "transport_type": "air",
-              "interests": ["art", "food", "history"]
+              "interests": ["art", "museums", "food", "history", "architecture", "walking tours", "photography", "local culture"]
             }}
             """
             
@@ -170,7 +177,10 @@ class LLMService:
             
             # Create prompt for LLM
             prompt = f"""
-            Generate a detailed travel itinerary for a trip with the following details:
+            You are a professional travel planner designing a carefully crafted, realistic, and enjoyable travel itinerary. 
+            Create a well-structured day-by-day travel plan that optimizes the travel experience while considering practical logistics.
+            
+            Trip details:
             - Origin: {origin}
             - Destination(s): {destinations_str}
             - Start date: {start_date}
@@ -180,7 +190,19 @@ class LLMService:
             - Transport type: {trip_data.transport_type}
             - Interests: {interests_str}
             
-            Return a JSON object with the structure:
+            Follow these guidelines for an exceptional itinerary:
+            1. Consider travel time between destinations realistically
+            2. Group activities by geographic proximity to minimize travel time
+            3. Balance the schedule - don't overpack days with too many activities
+            4. Include specific restaurant recommendations that match the budget level
+            5. Suggest actual hotels/accommodations that exist in these locations
+            6. Include cultural context and insider tips in activity descriptions
+            7. Vary activities to match all the specified interests
+            8. Plan realistic arrival/departure times for transportation
+            9. Include rest periods and free time in the schedule
+            10. Provide accurate cost estimates appropriate for the budget level
+            
+            Return a JSON object with this structure:
             
             {{
                 "days": [
@@ -190,7 +212,7 @@ class LLMService:
                         "activities": [
                             {{
                                 "name": "Activity name",
-                                "description": "Activity description",
+                                "description": "Detailed activity description with cultural context and practical tips",
                                 "location": {{"city": "City name", "country": "Country name"}},
                                 "start_time": "09:00",
                                 "end_time": "11:00",
@@ -208,11 +230,11 @@ class LLMService:
                             }}
                         ],
                         "accommodation": {{
-                            "name": "Hotel/accommodation name",
+                            "name": "Specific hotel/accommodation name",
                             "location": {{"city": "City name", "country": "Country name"}},
                             "cost_estimate": 150.0
                         }},
-                        "notes": "Overall day notes"
+                        "notes": "Overall day notes with practical tips and recommendations"
                     }}
                 ],
                 "total_cost_estimate": 2500.0
@@ -412,17 +434,37 @@ class LLMService:
             current_itinerary_json = itinerary.model_dump_json()
             
             specific_day = ""
+            day_number = None
             if refinement.specific_day is not None:
                 specific_day = f"for day {refinement.specific_day}"
+                day_number = refinement.specific_day
             
             prompt = f"""
-            I have an existing travel itinerary that needs to be refined {specific_day} based on user feedback.
+            You are a professional travel planner refining an existing itinerary based on user feedback.
+            Your goal is to make thoughtful and practical adjustments to create an improved travel experience.
             
             Current itinerary: {current_itinerary_json}
             
-            User's request for refinement: "{refinement.natural_language_request}"
-            """
+            User feedback: {refinement.natural_language_request}
             
+            Follow these guidelines when making refinements:
+            1. Preserve the overall structure and format of the original itinerary
+            2. Make changes that directly address the user's feedback
+            3. Ensure the revised itinerary remains realistic and logistically sound
+            4. Maintain appropriate pacing - don't overcrowd days with too many activities
+            5. Keep the changes consistent with the original budget level and interests
+            6. If adjusting timing, ensure sufficient travel time between activities
+            7. If adding new activities, provide detailed descriptions and accurate cost estimates
+            8. If changing accommodations or transportation, use realistic options
+            9. Only modify days explicitly mentioned in feedback or if absolutely necessary
+            10. Include specific details and recommendations in new additions
+            
+            {f"Focus your changes primarily on day {day_number}, unless the feedback clearly applies to other days." if day_number else ""}
+            
+            Please provide an updated itinerary that incorporates the user's feedback while maintaining a high-quality travel plan. 
+            The response should be a complete itinerary in the same JSON format as the original.
+            Return ONLY valid JSON without any explanations or additional text.
+            """
             response = await self._make_llm_request([{"role": "user", "content": prompt}], temperature=0.7)
             content = response
             

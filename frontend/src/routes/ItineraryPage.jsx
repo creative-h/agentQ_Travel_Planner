@@ -198,15 +198,22 @@ const ItineraryPage = () => {
   const handleRefinementSubmit = async (request) => {
     try {
       console.log('Refining itinerary with request:', request);
-      // In a real app, we would make an API call to refine the itinerary
       
-      // For now, just show a success message
-      alert('Itinerary refinement request sent! The AI is processing your request.');
+      // Make the actual API call to refine the itinerary
+      const response = await apiService.refineItinerary(tripId, request);
       
-      // We would then update the itinerary with the response from the API
+      // Refresh the itinerary data to get the updated version
+      const updatedItineraryResponse = await apiService.getItinerary(tripId);
+      setItinerary(updatedItineraryResponse.data);
+      
+      // Return the response to the ChatRefinement component
+      return { 
+        success: true, 
+        message: 'Your itinerary has been updated based on your feedback!' 
+      };
     } catch (error) {
       console.error('Error refining itinerary:', error);
-      alert('Failed to refine itinerary. Please try again.');
+      throw error; // Let the ChatRefinement component handle the error
     }
   };
 
@@ -230,18 +237,27 @@ const ItineraryPage = () => {
   const currentDayItinerary = itinerary.days.find(day => day.day_number === activeDay) || itinerary.days[0];
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Your Trip to {tripDetails.destinations[0].city}, {tripDetails.destinations[0].country}
-        </h1>
-        <div className="flex flex-wrap gap-2">
-          <span className="badge badge-blue">{tripDetails.start_date} - {tripDetails.end_date}</span>
-          <span className="badge badge-green">{tripDetails.budget_level}</span>
-          <span className="badge badge-purple">{tripDetails.travelers.adults} Adult{tripDetails.travelers.adults > 1 ? 's' : ''}</span>
-          {tripDetails.preferences?.interests.map((interest, i) => (
-            <span key={i} className="badge badge-blue">{interest}</span>
-          ))}
+    <div className="container mx-auto px-4 py-8">
+      {/* Sticky Trip Summary Banner */}
+      <div className="sticky top-0 z-10 bg-white shadow-md p-4 rounded-lg mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+          <div>
+            <h2 className="text-2xl font-bold">{tripDetails.destinations[0].city} Itinerary</h2>
+            <div className="flex flex-wrap gap-2 text-sm text-gray-500">
+              <div>🗓️ {tripDetails.start_date} to {tripDetails.end_date}</div>
+              <div>👫 {tripDetails.travelers.adults} Adults, {tripDetails.travelers.children} Children</div>
+            </div>
+          </div>
+          <div className="mt-4 md:mt-0 flex flex-wrap gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Budget:</span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">${itinerary.total_cost_estimate.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Duration:</span>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">{itinerary.days.length} Days</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -277,23 +293,19 @@ const ItineraryPage = () => {
 
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold">Trip Summary</h3>
+                <h3 className="text-lg font-semibold">Day Selection</h3>
               </div>
               <div className="card-body">
                 <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Total Budget</p>
-                    <p className="text-lg font-semibold">${itinerary.total_cost_estimate.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Duration</p>
-                    <p className="text-lg font-semibold">{itinerary.days.length} Days</p>
-                  </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Activities</p>
                     <p className="text-lg font-semibold">
                       {itinerary.days.reduce((acc, day) => acc + day.activities.length, 0)} Total
                     </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Current Day</p>
+                    <p className="text-lg font-semibold">Day {activeDay}</p>
                   </div>
                 </div>
               </div>

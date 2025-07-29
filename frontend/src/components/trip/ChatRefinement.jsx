@@ -30,20 +30,25 @@ const ChatRefinement = ({ onSubmit, currentDay }) => {
     setIsLoading(true);
 
     try {
-      // In a real application, this would be an API call
-      // Instead, we'll simulate the API response with a timeout
-      setTimeout(() => {
-        const aiResponse = "I've updated your itinerary based on your request. I've added more outdoor activities, replaced the museum visit with a park exploration, and scheduled a traditional local dinner instead of the previous restaurant.";
-        
+      // Call the onSubmit callback with the refinement request
+      // This will trigger the actual API call in the parent component
+      const response = await onSubmit(refinementRequest);
+      
+      // If we get a response from the API, show it
+      if (response && response.message) {
         setChatHistory(prev => [
           ...prev,
-          { role: 'assistant', content: aiResponse }
+          { role: 'assistant', content: response.message }
         ]);
-        
-        // Call the onSubmit callback with the refinement request
-        onSubmit(refinementRequest);
-        setIsLoading(false);
-      }, 1500);
+      } else {
+        // Default message if no specific response message
+        setChatHistory(prev => [
+          ...prev,
+          { role: 'assistant', content: "I've updated your itinerary based on your request. The changes have been applied to your plan." }
+        ]);
+      }
+      
+      setIsLoading(false);
     } catch (error) {
       console.error('Error sending refinement request:', error);
       setChatHistory(prev => [

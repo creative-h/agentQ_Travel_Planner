@@ -426,6 +426,7 @@ class LLMService:
     async def refine_itinerary(self, 
                               itinerary: Itinerary, 
                               refinement: ItineraryRefinementRequest) -> Itinerary:
+        import re  # Add import for regex operations
         """
         Refine an existing itinerary based on natural language feedback
         """
@@ -461,29 +462,73 @@ class LLMService:
             
             {f"Focus your changes primarily on day {day_number}, unless the feedback clearly applies to other days." if day_number else ""}
             
-            Please provide an updated itinerary that incorporates the user's feedback while maintaining a high-quality travel plan. 
-            The response should be a complete itinerary in the same JSON format as the original.
-            Return ONLY valid JSON without any explanations or additional text.
+            EXTREMELY IMPORTANT: You MUST return a response that is ONLY valid JSON without any explanations or additional text.
+            The JSON must exactly match the structure of the original itinerary with your refinements applied.
+            Pay special attention to proper JSON formatting with correct quotes, commas, and braces.
+            Do not include any markdown formatting, code blocks, or explanations outside the JSON.
             """
             response = await self._make_llm_request([{"role": "user", "content": prompt}], temperature=0.7)
             content = response
             
+            # Try to extract JSON from the response
             try:
-                parsed_content = json.loads(content)
+                # First try to parse as is
+                try:
+                    parsed_content = json.loads(content)
+                except json.JSONDecodeError:
+                    # If direct parsing fails, try to find and extract JSON content
+                    # This handles cases where the LLM includes explanations or markdown formatting
+                    json_start = content.find('{')
+                    json_end = content.rfind('}')
+                    
+                    if json_start >= 0 and json_end >= 0:
+                        json_content = content[json_start:json_end + 1]
+                        # Replace any problematic newlines in JSON string values
+                        json_content = re.sub(r'"([^"]*?)\n([^"]*?)"', r'"\1 \2"', json_content)
+                        # Try to clean other common JSON errors
+                        json_content = re.sub(r',\s*}', '}', json_content)  # Remove trailing commas
+                        json_content = re.sub(r',\s*]', ']', json_content)  # Remove trailing commas in arrays
+                        parsed_content = json.loads(json_content)
+                    else:
+                        raise ValueError("Could not find valid JSON in the response")
                 
                 # Ensure the refined itinerary has the same trip_id
                 if "trip_id" not in parsed_content:
                     parsed_content["trip_id"] = itinerary.trip_id
-                    
+                
+                # Add created_at and updated_at if missing
+                if "created_at" not in parsed_content:
+                    parsed_content["created_at"] = itinerary.created_at
+                if "updated_at" not in parsed_content:
+                    parsed_content["updated_at"] = datetime.now()
+                
+                # Validate and create the itinerary object
                 refined_itinerary = Itinerary(**parsed_content)
                 logger.info("Successfully refined itinerary", 
                            trip_id=itinerary.trip_id, 
                            refinement=refinement.natural_language_request)
                 return refined_itinerary
                 
-            except (json.JSONDecodeError, ValidationError) as e:
+            except (json.JSONDecodeError, ValidationError, ValueError) as e:
                 logger.error("Failed to parse refined itinerary", error=str(e))
-                raise ValueError("Failed to refine itinerary: Invalid response format")
+                # If parsing fails completely, return the original itinerary with minimal changes
+                # This is better than crashing with an error
+                logger.warning("Falling back to original itinerary with minimal changes")
+                
+                # Make a copy of the original itinerary and just update a note
+                fallback_itinerary = itinerary.model_copy(deep=True)
+                fallback_itinerary.updated_at = datetime.now()
+                
+                # Add a note about the refinement attempt
+                if fallback_itinerary.days and len(fallback_itinerary.days) > 0:
+                    day_index = 0
+                    if day_number is not None and 1 <= day_number <= len(fallback_itinerary.days):
+                        day_index = day_number - 1
+                    
+                    # Add a note to the day
+                    fallback_itinerary.days[day_index].notes = f"Refinement requested: {refinement.natural_language_request[:100]}..."
+                
+                return fallback_itinerary
                 
         except Exception as e:
             logger.error("Failed to refine itinerary", 

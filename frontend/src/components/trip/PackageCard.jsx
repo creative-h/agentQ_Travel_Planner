@@ -31,7 +31,7 @@ const PackageTypeIcon = ({ type, className }) => {
   }
 };
 
-const PackageCard = ({ travelPackage, onSelect }) => {
+const PackageCard = ({ travelPackage, onSelect, isSelected = false }) => {
   const { flight, hotel, type, sources } = travelPackage;
 
   // Generate background color based on package type
@@ -77,7 +77,7 @@ const PackageCard = ({ travelPackage, onSelect }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl">
+    <div className={`${isSelected ? 'ring-2 ring-offset-2' : ''} ${isSelected && type.toLowerCase() === 'religious' ? 'ring-purple-600' : isSelected && type.toLowerCase() === 'thrill' ? 'ring-orange-600' : isSelected ? 'ring-blue-600' : ''} bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl`}>
       <div className={`${getBgColor()} p-3 border-b flex items-center justify-between`}>
         <div className="flex items-center">
           <PackageTypeIcon type={type} className={`h-6 w-6 mr-2 ${getAccentColor()}`} />
@@ -200,7 +200,7 @@ const PackageCard = ({ travelPackage, onSelect }) => {
             onClick={() => onSelect(travelPackage)}
             className={`w-full ${getButtonColor()} text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50`}
         >
-          Select This Package
+          {isSelected ? 'Selected Package' : 'Select This Package'}
         </button>
       </div>
     </div>

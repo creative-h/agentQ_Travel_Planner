@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PackageCard from './PackageCard';
 import { PACKAGE_TYPES } from '../../types';
 
-const PackageSelector = ({ itinerary, tripDetails, onSelectPackage }) => {
+const PackageSelector = ({ itinerary, tripDetails, onSelectPackage, selectedPackage }) => {
   const [packages, setPackages] = useState([]);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   
@@ -195,7 +195,8 @@ const PackageSelector = ({ itinerary, tripDetails, onSelectPackage }) => {
           <PackageCard 
             key={pkg.id} 
             travelPackage={pkg} 
-            onSelect={onSelectPackage} 
+            onSelect={onSelectPackage}
+            isSelected={selectedPackage && selectedPackage.id === pkg.id}
           />
         ))}
       </div>

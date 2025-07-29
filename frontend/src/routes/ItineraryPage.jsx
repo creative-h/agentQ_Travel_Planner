@@ -17,31 +17,30 @@ const ItineraryPage = () => {
   const [showDayDetails, setShowDayDetails] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [totalCost, setTotalCost] = useState(0);
 
   useEffect(() => {
     // Fetch real data from the API
-    const fetchItinerary = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
+        // First, get the trip details
+        const tripResponse = await apiService.getTrip(tripId);
+        setTripDetails(tripResponse.data);
         
+        // Then, get the itinerary for that trip
         try {
-          // Get trip details from the API
-          const tripResponse = await apiService.getTrip(tripId);
-          const tripData = tripResponse.data;
-          setTripDetails(tripData);
-          
-          // Try to get itinerary if it exists
-          try {
-            const itineraryResponse = await apiService.getItinerary(tripId);
-            setItinerary(itineraryResponse.data);
-          } catch (err) {
-            // If no itinerary exists yet, generate one
-            if (err.response && err.response.status === 404) {
-              const generatedResponse = await apiService.generateItinerary(tripId);
-              setItinerary(generatedResponse.data);
-            } else {
-              throw err;
-            }
+          const itineraryResponse = await apiService.getItinerary(tripId);
+          setItinerary(itineraryResponse.data);
+          setTotalCost(itineraryResponse.data.total_cost_estimate);
+        } catch (err) {
+          // If no itinerary exists yet, generate one
+          if (err.response && err.response.status === 404) {
+            const generatedResponse = await apiService.generateItinerary(tripId);
+            setItinerary(generatedResponse.data);
+            setTotalCost(generatedResponse.data.total_cost_estimate);
+          } else {
+            throw err;
           }
         } catch (apiError) {
           console.error("Error fetching trip data:", apiError);
@@ -204,11 +203,18 @@ const ItineraryPage = () => {
   
   const handleSelectPackage = (pkg) => {
     setSelectedPackage(pkg);
+    setTotalCost(pkg.totalPrice);
     setShowCheckout(true);
   };
   
   const handleCloseCheckout = () => {
     setShowCheckout(false);
+    // Don't reset the selected package so it stays visible in the summary
+  };
+  
+  const handleClearPackage = () => {
+    setSelectedPackage(null);
+    setTotalCost(itinerary?.total_cost_estimate || 0);
   };
   
   const handleCloseDayDetails = () => {
@@ -225,6 +231,19 @@ const ItineraryPage = () => {
       // Refresh the itinerary data to get the updated version
       const updatedItineraryResponse = await apiService.getItinerary(tripId);
       setItinerary(updatedItineraryResponse.data);
+      
+      // Update package prices if they should change based on itinerary
+      if (selectedPackage) {
+        // Create an updated version of the package with new pricing
+        const updatedPackage = { ...selectedPackage };
+        // Adjust package price based on new itinerary total
+        const percentageIncrease = updatedItineraryResponse.data.total_cost_estimate / totalCost;
+        updatedPackage.totalPrice = Math.round(updatedPackage.totalPrice * percentageIncrease);
+        // Update flight and hotel prices proportionally
+        updatedPackage.flight.price = Math.round(updatedPackage.flight.price * percentageIncrease);
+        updatedPackage.hotel.pricePerNight = Math.round(updatedPackage.hotel.pricePerNight * percentageIncrease);
+        setSelectedPackage(updatedPackage);
+      }
       
       // Close the day details modal if it's open
       setShowDayDetails(false);
@@ -272,14 +291,37 @@ const ItineraryPage = () => {
             </div>
           </div>
           <div className="mt-4 md:mt-0 flex flex-wrap gap-4 items-center">
+            {selectedPackage && (
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Selected Package:</span>
+                <span className={`px-2 py-1 rounded text-white ${selectedPackage.type === 'religious' ? 'bg-purple-600' : selectedPackage.type === 'thrill' ? 'bg-orange-600' : 'bg-blue-600'}`}>
+                  {selectedPackage.type.charAt(0).toUpperCase() + selectedPackage.type.slice(1)} Package
+                  <button 
+                    onClick={handleClearPackage} 
+                    className="ml-2 hover:bg-white hover:bg-opacity-20 rounded-full p-0.5"
+                    title="Remove package"
+                  >
+                    ✕
+                  </button>
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span className="font-semibold">Budget:</span>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">${itinerary.total_cost_estimate.toFixed(2)}</span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">${totalCost.toFixed(2)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold">Duration:</span>
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">{itinerary.days.length} Days</span>
             </div>
+            {selectedPackage && (
+              <button 
+                onClick={() => setShowCheckout(true)}
+                className="ml-2 bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Proceed to Checkout
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -290,6 +332,7 @@ const ItineraryPage = () => {
           itinerary={itinerary} 
           tripDetails={tripDetails} 
           onSelectPackage={handleSelectPackage}
+          selectedPackage={selectedPackage}
         />
       </div>
 
